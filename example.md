@@ -1,6 +1,6 @@
 ## Resources
 
-### haproxy_acl
+### haproxy_acl
 
 Backend describes a set of servers to which the proxy will connect to forward incoming connections.
 
@@ -43,7 +43,7 @@ haproxy_acl 'restricted_page path_beg /' do
   section_name 'admin'
 end
 ```
-### haproxy_backend
+### haproxy_backend
 
 Backend describes a set of servers to which the proxy will connect to forward incoming connections.
 
@@ -64,7 +64,7 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
-### haproxy_config_defaults
+### haproxy_config_defaults
 
 Defaults sets default parameters for all other sections following
 its declaration. Those default parameters are reset by the next "defaults"
@@ -91,7 +91,7 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
-### haproxy_config_global
+### haproxy_config_global
 
 #### Actions
 
@@ -115,7 +115,7 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
-### haproxy_frontend
+### haproxy_frontend
 
 Frontend describes a set of listening sockets accepting client connections.
 
@@ -153,7 +153,7 @@ haproxy_frontend 'tcp-in' do
   default_backend 'tcp-servers'
 end
 ```
-### haproxy_install
+### haproxy_install
 
 #### Actions
 
@@ -187,7 +187,7 @@ end
 - `use_linux_tproxy` -  (is: String)
 - `use_linux_splice` -  (is: String)
 
-### haproxy_listen
+### haproxy_listen
 
 Listen defines a complete proxy with its frontend and backend parts combined in one section. It is generally useful for TCP-only traffic.
 
@@ -212,7 +212,7 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
-### haproxy_resolver
+### haproxy_resolver
 
 #### Actions
 
@@ -225,7 +225,7 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
-### haproxy_service
+### haproxy_service
 
 #### Actions
 
@@ -247,7 +247,7 @@ Introduced: v4.0.0
 - `source_version` -  (is: String)
 - `use_systemd` -  (is: String)
 
-### haproxy_use_backend
+### haproxy_use_backend
 
 #### Actions
 
@@ -261,7 +261,7 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
-### haproxy_userlist
+### haproxy_userlist
 
 #### Actions
 

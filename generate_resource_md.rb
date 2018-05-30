@@ -5,13 +5,15 @@ resources = ResourceInspector.extract_cookbook(path, complete: false)
 markdown = ''
 markdown << "## Resources\n\n"
 resources.each do |name, values|
-  markdown << "### #{name}\n"
+  markdown << "### #{name}\n"
   markdown << "\n#{values[:description].strip}\n" if values[:description]
   markdown << "\nIntroduced: #{values[:introduced]}\n" if values[:introduced]
+
   markdown << "\n#### Actions\n"
   (values[:actions] - [:nothing]).each do |action|
     markdown << "\n- `:#{action}`"
   end
+
   markdown << "\n\n#### Properties\n\n"
   common_properties = %i[name retries retry_delay sensitive ignore_failure]
   (values[:properties]).each do |property|
