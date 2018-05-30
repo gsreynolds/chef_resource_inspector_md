@@ -43,8 +43,6 @@ haproxy_acl 'restricted_page path_beg /' do
   section_name 'admin'
 end
 ```
-
-
 ### haproxy_backend
 
 Backend describes a set of servers to which the proxy will connect to forward incoming connections.
@@ -155,8 +153,6 @@ haproxy_frontend 'tcp-in' do
   default_backend 'tcp-servers'
 end
 ```
-
-
 ### haproxy_install
 
 #### Actions
@@ -277,3 +273,4 @@ Introduced: v4.0.0
 - `user` -  (is: Hash)
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
+
