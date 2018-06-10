@@ -2,9 +2,11 @@
 
 ### haproxy_acl
 
-Backend describes a set of servers to which the proxy will connect to forward incoming connections.
+Access Control Lists creates a new ACL <aclname> or completes an existing one with new tests.
 
-Introduced: v4.0.0
+The actions generally consist in blocking a request, selecting a backend, or adding a header.
+
+Introduced: v4.2.0
 
 #### Actions
 
@@ -21,6 +23,12 @@ Introduced: v4.0.0
 #### Examples
 
 ```
+haproxy_acl 'gina_host hdr(host) -i foo.bar.com' do
+  section 'frontend'
+  section_name 'http'
+end
+```
+```
 haproxy_acl 'acls for frontend:http' do
   section 'frontend'
   section_name 'http'
@@ -35,12 +43,6 @@ haproxy_acl 'acls for listen' do
   section 'listen'
   section_name 'admin'
   acl ['network_allowed src 127.0.0.1']
-end
-```
-```
-haproxy_acl 'restricted_page path_beg /' do
-  section 'listen'
-  section_name 'admin'
 end
 ```
 ### haproxy_backend
@@ -64,12 +66,33 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_backend 'servers' do
+  server ['server1 127.0.0.1:8000 maxconn 32']
+end
+```
+```
+haproxy_backend 'tiles_public' do
+  server ['tile0 10.0.0.10:80 check weight 1 maxconn 100',
+          'tile1 10.0.0.10:80 check weight 1 maxconn 100']
+  tcp_request ['content track-sc2 src',
+               'content reject if conn_rate_abuse mark_as_abuser']
+  option %w(httplog dontlognull forwardfor)
+  acl ['conn_rate_abuse sc2_conn_rate gt 3000',
+       'data_rate_abuse sc2_bytes_out_rate gt 20000000',
+       'mark_as_abuser sc1_inc_gpc0 gt 0',
+     ]
+  extra_options(
+    'stick-table' => 'type ip size 200k expire 2m store conn_rate(60s),bytes_out_rate(60s)',
+    'http-request' => 'set-header X-Public-User yes'
+  )
+end
+```
 ### haproxy_config_defaults
 
-Defaults sets default parameters for all other sections following
-its declaration. Those default parameters are reset by the next "defaults"
-section. See below for the list of parameters which can be set in a "defaults"
-section. The name is optional but its use is encouraged for better readability.
+Defaults sets default parameters for all other sections following its declaration. Those default parameters are reset by the next "defaults" section.
 
 Introduced: v4.0.0
 
@@ -91,7 +114,34 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_config_defaults 'defaults' do
+  mode 'http'
+  timeout connect: '5000ms',
+          client: '5000ms',
+          server: '5000ms'
+  haproxy_retries 5
+end
+```
+```
+haproxy_config_defaults 'defaults' do
+  mode 'http'
+  timeout connect: '5s',
+          client: '50s',
+          server: '50s'
+  log 'global'
+  retries 3
+end
+```
 ### haproxy_config_global
+
+Parameters in the "global" section are process-wide and often OS-specific.
+
+They are generally set once for all and do not need being changed once correct.
+
+Introduced: v4.0.0
 
 #### Actions
 
@@ -115,6 +165,29 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_config_global '' do
+  chroot '/var/lib/haproxy'
+  daemon true
+  maxconn 256
+  log '/dev/log local0'
+  log_tag 'WARDEN'
+  pidfile '/var/run/haproxy.pid'
+  stats socket: '/var/lib/haproxy/stats level admin'
+  tuning 'bufsize' => '262144'
+end
+```
+```
+haproxy_config_global 'global' do
+  daemon false
+  maxconn 4097
+  chroot '/var/lib/haproxy'
+  stats socket: '/var/lib/haproxy/haproxy.stat mode 600 level admin',
+        timeout: '2m'
+end
+```
 ### haproxy_frontend
 
 Frontend describes a set of listening sockets accepting client connections.
@@ -155,6 +228,10 @@ end
 ```
 ### haproxy_install
 
+Install HAProxy from package or source.
+
+Introduced: v4.0.0
+
 #### Actions
 
 - `:create`
@@ -187,9 +264,28 @@ end
 - `use_linux_tproxy` -  (is: String)
 - `use_linux_splice` -  (is: String)
 
+#### Examples
+
+```
+haproxy_install 'package'
+```
+```
+haproxy_install 'source' do
+  source_url node['haproxy']['source_url']
+  source_checksum node['haproxy']['source_checksum']
+  source_version node['haproxy']['source_version']
+  use_pcre '1'
+  use_openssl '1'
+  use_zlib '1'
+  use_linux_tproxy '1'
+  use_linux_splice '1'
+end
+```
 ### haproxy_listen
 
-Listen defines a complete proxy with its frontend and backend parts combined in one section. It is generally useful for TCP-only traffic.
+Listen defines a complete proxy with its frontend and backend parts combined in one section.
+
+It is generally useful for TCP-only traffic.
 
 Introduced: v4.0.0
 
@@ -212,7 +308,28 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_listen 'admin' do
+  bind '0.0.0.0:1337'
+  mode 'http'
+  stats uri: '/',
+        realm: 'Haproxy-Statistics',
+        auth: 'user:pwd'
+  http_request 'add-header X-Proto http'
+  http_response 'set-header Expires %[date(3600),http_date]'
+  default_backend 'servers'
+  extra_options('bind-process' => 'odd')
+end
+```
 ### haproxy_resolver
+
+Configuration related to name resolution in HAProxy. There can be as many as resolvers section as needed.
+
+Each section can contain many name servers.
+
+Introduced: v4.5.0
 
 #### Actions
 
@@ -225,7 +342,21 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_resolver 'dns' do
+  nameserver ['google 8.8.8.8:53']
+  extra_options('resolve_retries' => 30,
+                'timeout' => 'retry 1s')
+  notifies :restart, 'haproxy_service[haproxy]', :delayed
+end
+```
 ### haproxy_service
+
+Installs HAProxy as a systemd or sysvinit service.
+
+Introduced: v4.0.0
 
 #### Actions
 
@@ -247,7 +378,22 @@ Introduced: v4.0.0
 - `source_version` -  (is: String)
 - `use_systemd` -  (is: String)
 
+#### Examples
+
+```
+haproxy_service 'haproxy'
+```
+```
+haproxy_service 'haproxy' do
+  source_version node['haproxy']['source_version']
+  action :create
+end
+```
 ### haproxy_use_backend
+
+Switch to a specific backend if/unless an ACL-based condition is matched.
+
+Introduced: v4.2.0
 
 #### Actions
 
@@ -261,7 +407,29 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_use_backend 'gina if gina_host' do
+  section 'frontend'
+  section_name 'http'
+end
+```
+```
+haproxy_use_backend 'use_backends for frontend:http' do
+  section 'frontend'
+  section_name 'http'
+  use_backend [
+    'rrhost if rrhost_host',
+    'tiles_public if tile_host',
+  ]
+end
+```
 ### haproxy_userlist
+
+Control access to frontend/backend/listen sections or to http stats by allowing only authenticated and authorized users.
+
+Introduced: v4.1.0
 
 #### Actions
 
@@ -274,3 +442,14 @@ Introduced: v4.0.0
 - `config_dir` -  (is: String)
 - `config_file` -  (is: String)
 
+#### Examples
+
+```
+haproxy_userlist 'mylist' do
+  group 'G1' => 'users tiger,scott',
+        'G2' => 'users xdb,scott'
+  user  'tiger' => 'password $6$k6y3o.eP$JlKBx9za9667qe4(...)xHSwRv6J.C0/D7cV91',
+        'scott' => 'insecure-password elgato',
+        'xdb' => 'insecure-password hello'
+end
+```
