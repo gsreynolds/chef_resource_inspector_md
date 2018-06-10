@@ -8,10 +8,10 @@ resources.each do |name, values|
   markdown << "### #{name}\n"
   markdown << "\n#{values[:description].strip}\n" if values[:description]
   markdown << "\nIntroduced: #{values[:introduced]}\n" if values[:introduced]
-
   markdown << "\n#### Actions\n"
   (values[:actions] - [:nothing]).each do |action|
     markdown << "\n- `:#{action}`"
+    markdown << " (default)" if action == values[:default_action]
   end
 
   markdown << "\n\n#### Properties\n\n"
